@@ -1,0 +1,6 @@
+{
+  "name": "Hệ thống Quản lý Thi đua Liên đội",
+  "description": "Ứng dụng quản lý thi đua, cộng điểm và báo cáo tự động cho ban chỉ huy liên đội.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
