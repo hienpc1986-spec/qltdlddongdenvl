@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /classes/{classId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /dailyPoints/{pointId} {
+      allow list: if isSignedIn() && (isAdmin() || request.auth.token.classId == resource.data.classId);
+      allow get: if isSignedIn() && (isAdmin() || request.auth.token.classId == resource.data.classId);
+      allow create: if isSignedIn(); // Add more validation in next step
+      allow update: if isSignedIn() && (isAdmin() || request.auth.token.classId == resource.data.classId);
+      allow delete: if isAdmin();
+    }
+  }
+}

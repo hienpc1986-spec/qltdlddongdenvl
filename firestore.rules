@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // --- Global Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN'; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Entity Validations ---
+    function isValidDailyPoint(data) {
+      return data.classId is string && 
+             data.date is string && 
+             data.week is number && 
+             data.month is number;
+    }
+
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Collections ---
+    match /test/connection {
+      allow read, write: if true;
+    }
+
+    match /classes/{classId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /dailyPoints/{pointId} {
+      allow list: if isSignedIn() && (isAdmin() || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId == resource.data.classId);
+      allow get: if isSignedIn() && (isAdmin() || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId == resource.data.classId);
+      allow create: if isSignedIn() && isValidDailyPoint(incoming()) && incoming().classId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId;
+      allow update: if isSignedIn() && isValidDailyPoint(incoming()) && (isAdmin() || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId == existing().classId);
+      allow delete: if isAdmin();
+    }
+  }
+}

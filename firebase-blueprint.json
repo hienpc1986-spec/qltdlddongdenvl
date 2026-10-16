@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "ClassInfo": {
+      "title": "ClassInfo",
+      "description": "Class information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "grade": { "type": "number" },
+        "teacher": { "type": "string" }
+      },
+      "required": ["id", "name", "grade", "teacher"]
+    },
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "User account information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "TEACHER", "SAO_DO"] },
+        "displayName": { "type": "string" },
+        "classId": { "type": "string" }
+      },
+      "required": ["id", "username", "role", "displayName"]
+    },
+    "DailyPoints": {
+      "title": "DailyPoints",
+      "description": "Daily scoring information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "classId": { "type": "string" },
+        "date": { "type": "string" },
+        "week": { "type": "number" },
+        "month": { "type": "number" }
+      },
+      "required": ["id", "classId", "date", "week", "month"]
+    }
+  },
+  "firestore": {
+    "classes/{classId}": {
+      "schema": "ClassInfo",
+      "description": "Stores class information"
+    },
+    "users/{userId}": {
+      "schema": "UserAccount",
+      "description": "Stores user account information"
+    },
+    "dailyPoints/{pointId}": {
+      "schema": "DailyPoints",
+      "description": "Stores daily scoring information"
+    }
+  }
+}

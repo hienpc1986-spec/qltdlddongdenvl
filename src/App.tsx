@@ -4,6 +4,8 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { db, auth } from './firebase';
+import { classService } from './services/classService';
 import { 
   LayoutDashboard, 
   Users, 
@@ -129,26 +131,30 @@ export default function App() {
   const [weeklyDetailClassId, setWeeklyDetailClassId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load data from localStorage
-    const savedClasses = localStorage.getItem('liendoi_classes');
+    const fetchClasses = async () => {
+      try {
+        const data = await classService.getAllClasses();
+        if (data.length > 0) {
+          setClasses(data);
+        } else {
+          // Initialize with mock if empty (optional: can be done differently)
+          const mockClasses: ClassInfo[] = [
+            { id: '1', name: '6A1', grade: 6, teacher: 'Nguyễn Văn A' },
+            { id: '2', name: '7A2', grade: 7, teacher: 'Trần Thị B' },
+            { id: '3', name: '8A3', grade: 8, teacher: 'Lê Văn C' },
+            { id: '4', name: '9A4', grade: 9, teacher: 'Phạm Thị D' },
+          ];
+          setClasses(mockClasses);
+          for (const c of mockClasses) await classService.addClass(c);
+        }
+      } catch (error) {
+        console.error("Error fetching classes:", error);
+      }
+    };
+    fetchClasses();
+
+    // Still load other data from localStorage for now
     const savedWeekly = localStorage.getItem('liendoi_weekly');
-
-    let loadedClasses: ClassInfo[] = [];
-    if (savedClasses) {
-      loadedClasses = JSON.parse(savedClasses);
-      setClasses(loadedClasses);
-    } else {
-      // Mock classes
-      loadedClasses = [
-        { id: '1', name: '6A1', grade: 6, teacher: 'Nguyễn Văn A' },
-        { id: '2', name: '7A2', grade: 7, teacher: 'Trần Thị B' },
-        { id: '3', name: '8A3', grade: 8, teacher: 'Lê Văn C' },
-        { id: '4', name: '9A4', grade: 9, teacher: 'Phạm Thị D' },
-      ];
-      setClasses(loadedClasses);
-      localStorage.setItem('liendoi_classes', JSON.stringify(loadedClasses));
-    }
-
     if (savedWeekly && JSON.parse(savedWeekly).length > 0) {
       setWeeklyData(JSON.parse(savedWeekly));
     } else {
@@ -3683,7 +3689,7 @@ export default function App() {
             <img src="/src/assets/images/logo_emblem_only_1791452125388.jpg" alt="Logo" className="w-full h-full object-cover scale-110" />
           </div>
           <h1 className="text-2xl font-black uppercase tracking-tight">Hệ thống Thi đua</h1>
-          <p className="text-blue-100 text-sm font-medium mt-1 uppercase tracking-widest opacity-80">THCS Đồng Đen • Năm học 2026 - 2027</p>
+          <p className="text-blue-100 text-sm font-medium mt-1 uppercase tracking-widest opacity-80">THCS Đồng Đen</p>
         </div>
         <div className="p-8 space-y-6">
           <form onSubmit={handleLogin} className="space-y-4">
@@ -3717,71 +3723,7 @@ export default function App() {
             </button>
           </form>
 
-          {/* Quick Demo Login Buttons */}
-          <div className="pt-4 border-t border-slate-100">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">
-              Đăng nhập nhanh để trải nghiệm phân quyền:
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const u = accounts.find(a => a.username === 'admin') || accounts[0];
-                  if (u) {
-                    setCurrentUser(u);
-                    sessionStorage.setItem('liendoi_user', JSON.stringify(u));
-                  }
-                }}
-                className="p-2.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-xl text-xs font-bold text-left border border-rose-200 transition-all"
-              >
-                <span className="block text-[10px] text-rose-500 uppercase font-black">Ban chỉ huy</span>
-                🛡️ Admin (Toàn quyền)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const u = accounts.find(a => a.username === 'gvcn_6a1');
-                  if (u) {
-                    setCurrentUser(u);
-                    sessionStorage.setItem('liendoi_user', JSON.stringify(u));
-                  }
-                }}
-                className="p-2.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl text-xs font-bold text-left border border-blue-200 transition-all"
-              >
-                <span className="block text-[10px] text-blue-500 uppercase font-black">GVCN Lớp 6A1</span>
-                👨‍🏫 Thầy Nguyễn Văn A
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const u = accounts.find(a => a.username === 'gvcn_7a2');
-                  if (u) {
-                    setCurrentUser(u);
-                    sessionStorage.setItem('liendoi_user', JSON.stringify(u));
-                  }
-                }}
-                className="p-2.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl text-xs font-bold text-left border border-purple-200 transition-all"
-              >
-                <span className="block text-[10px] text-purple-500 uppercase font-black">GVCN Lớp 7A2</span>
-                👩‍🏫 Cô Trần Thị B
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const u = accounts.find(a => a.username === 'saodo');
-                  if (u) {
-                    setCurrentUser(u);
-                    sessionStorage.setItem('liendoi_user', JSON.stringify(u));
-                  }
-                }}
-                className="p-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold text-left border border-emerald-200 transition-all"
-              >
-                <span className="block text-[10px] text-emerald-500 uppercase font-black">Chấm chéo</span>
-                ⭐ Đội Sao đỏ
-              </button>
-            </div>
-            <p className="text-[9px] text-slate-400 text-center mt-2.5 italic">Mật khẩu mặc định cho tất cả tài khoản: 123</p>
-          </div>
+
         </div>
       </div>
     </div>
@@ -3913,7 +3855,7 @@ export default function App() {
               </span>
             </div>
             <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
-            <p className="text-xs font-semibold text-slate-600 hidden sm:block">Năm học 2026 - 2027</p>
+            <p className="text-xs font-semibold text-slate-600 hidden sm:block"></p>
           </div>
         </header>
 
